@@ -2,12 +2,18 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCurrency } from '../hooks/useCurrency'
+import AdminSettings from '../components/AdminSettings'
+import AddUserModal from '../components/AddUserModal'
+import AddPackageModal from '../components/AddPackageModal'
+import WebsiteManagement from '../components/WebsiteManagement'
 
 const AdminPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showAddUserModal, setShowAddUserModal] = useState(false)
+  const [showAddPackageModal, setShowAddPackageModal] = useState(false)
   const { formatUSDToKSH, exchangeRate } = useCurrency()
 
   // Mock admin data - in real app, this would come from API
@@ -182,6 +188,14 @@ const AdminPage = () => {
     setMessageData({ recipient: 'all', subject: '', message: '', sendToTelegram: false })
   }
 
+  const handleUserAdded = (newUser) => {
+    setUsers([...users, newUser])
+  }
+
+  const handlePackageAdded = (newPackage) => {
+    setPackages([...packages, newPackage])
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/admin')
@@ -237,7 +251,9 @@ const AdminPage = () => {
             { id: 'packages', name: 'Packages', icon: '📦', description: 'Pricing Plans' },
             { id: 'transactions', name: 'Transactions', icon: '💳', description: 'Payments' },
             { id: 'telegram', name: 'Telegram', icon: '📱', description: 'Channel Management' },
-            { id: 'messages', name: 'Messages', icon: '✉️', description: 'Notifications' }
+            { id: 'messages', name: 'Messages', icon: '✉️', description: 'Notifications' },
+            { id: 'website', name: 'Website', icon: '🌐', description: 'Content Management' },
+            { id: 'settings', name: 'Settings', icon: '⚙️', description: 'API Configuration' }
           ].map((item) => (
             <button
               key={item.id}
@@ -313,6 +329,8 @@ const AdminPage = () => {
                       {activeTab === 'transactions' && '💳'}
                       {activeTab === 'telegram' && '📱'}
                       {activeTab === 'messages' && '✉️'}
+                      {activeTab === 'website' && '🌐'}
+                      {activeTab === 'settings' && '⚙️'}
                     </span>
                     {activeTab === 'overview' && 'Dashboard Overview'}
                     {activeTab === 'users' && 'User Management'}
@@ -320,6 +338,8 @@ const AdminPage = () => {
                     {activeTab === 'transactions' && 'Transaction Management'}
                     {activeTab === 'telegram' && 'Telegram Management'}
                     {activeTab === 'messages' && 'Message Center'}
+                    {activeTab === 'website' && 'Website Management'}
+                    {activeTab === 'settings' && 'API Settings'}
                   </h1>
                   <p className="text-gray-600 text-sm mt-1">
                     {activeTab === 'overview' && 'Monitor your platform performance and activity'}
@@ -328,6 +348,8 @@ const AdminPage = () => {
                     {activeTab === 'transactions' && 'Review payments and transaction history'}
                     {activeTab === 'telegram' && 'Control Telegram channel access and members'}
                     {activeTab === 'messages' && 'Send notifications and announcements'}
+                    {activeTab === 'website' && 'Manage website content and appearance'}
+                    {activeTab === 'settings' && 'Configure M-Pesa, SMS, and Telegram API settings'}
                   </p>
                 </div>
               </div>
@@ -519,7 +541,10 @@ const AdminPage = () => {
                       placeholder="Search users..."
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <button
+                      onClick={() => setShowAddUserModal(true)}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                       Add User
                     </button>
                   </div>
@@ -602,10 +627,18 @@ const AdminPage = () => {
             {/* Packages Tab */}
             {activeTab === 'packages' && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-semibold flex items-center">
-                  <span className="mr-2">📦</span>
-                  Package Management
-                </h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-semibold flex items-center">
+                    <span className="mr-2">📦</span>
+                    Package Management
+                  </h3>
+                  <button
+                    onClick={() => setShowAddPackageModal(true)}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Add Package
+                  </button>
+                </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {packages.map((pkg) => (
                     <div key={pkg.id} className="bg-gray-50 rounded-xl p-6">
@@ -788,9 +821,32 @@ const AdminPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Website Management Tab */}
+            {activeTab === 'website' && (
+              <WebsiteManagement />
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === 'settings' && (
+              <AdminSettings />
+            )}
           </div>
         </main>
       </div>
+
+      {/* Modals */}
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={() => setShowAddUserModal(false)}
+        onUserAdded={handleUserAdded}
+      />
+
+      <AddPackageModal
+        isOpen={showAddPackageModal}
+        onClose={() => setShowAddPackageModal(false)}
+        onPackageAdded={handlePackageAdded}
+      />
     </div>
   )
 }
