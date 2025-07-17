@@ -496,26 +496,40 @@ const AdminPage = () => {
                       Quick Actions
                     </h3>
                     <div className="space-y-4">
-                      <button 
+                      <button
+                        onClick={() => setActiveTab('website')}
+                        className="w-full bg-indigo-600 text-white p-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center"
+                      >
+                        <span className="mr-2">🌐</span>
+                        Website Content Management
+                      </button>
+                      <button
                         onClick={() => setActiveTab('telegram')}
                         className="w-full bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                       >
                         <span className="mr-2">📱</span>
                         Manage Telegram Channel
                       </button>
-                      <button 
+                      <button
                         onClick={() => setActiveTab('messages')}
                         className="w-full bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
                       >
                         <span className="mr-2">✉️</span>
                         Send Broadcast Message
                       </button>
-                      <button 
+                      <button
                         onClick={() => setActiveTab('packages')}
                         className="w-full bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
                       >
                         <span className="mr-2">📦</span>
                         Update Package Prices
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('users')}
+                        className="w-full bg-cyan-600 text-white p-4 rounded-lg hover:bg-cyan-700 transition-colors flex items-center justify-center"
+                      >
+                        <span className="mr-2">👥</span>
+                        Manage Users
                       </button>
                       <button className="w-full bg-orange-600 text-white p-4 rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center">
                         <span className="mr-2">📊</span>
