@@ -62,11 +62,23 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
         if (result.success) {
           onSuccess()
         } else {
-          setError(result.error || 'Registration failed. Please try again.')
+          // Handle validation errors
+          if (result.error && result.error.includes('validation')) {
+            setError('Please check your input and try again.')
+          } else {
+            setError(result.error || 'Registration failed. Please try again.')
+          }
         }
       }
     } catch (error) {
-      setError('Authentication failed. Please try again.')
+      console.error('Auth error:', error)
+      if (error.message.includes('Too many requests')) {
+        setError('Too many attempts. Please wait a moment and try again.')
+      } else if (error.message.includes('Unable to connect')) {
+        setError('Unable to connect to server. Please check your connection.')
+      } else {
+        setError('Authentication failed. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }

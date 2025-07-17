@@ -32,12 +32,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     trim: true,
-    match: [/^\+?[1-9]\d{1,14}$/, 'Please enter a valid phone number']
+    minlength: [10, 'Phone number must be at least 10 characters']
   },
   telegramUsername: {
     type: String,
     trim: true,
-    match: [/^@?[a-zA-Z0-9_]{5,32}$/, 'Please enter a valid Telegram username']
+    maxlength: [50, 'Telegram username cannot exceed 50 characters']
   },
   role: {
     type: String,

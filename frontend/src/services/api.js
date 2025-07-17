@@ -40,7 +40,22 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      let data;
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // Handle non-JSON responses (like rate limiting messages)
+        const textData = await response.text();
+        data = {
+          success: false,
+          message: textData || 'Request failed',
+          status: response.status
+        };
+      }
 
       if (!response.ok) {
         // Handle specific error cases
@@ -49,12 +64,24 @@ class ApiService {
           this.removeAuthToken();
           window.location.href = '/admin'; // Redirect to login
         }
-        throw new Error(data.message || 'Request failed');
+
+        if (response.status === 429) {
+          // Rate limiting
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
+
+        throw new Error(data.message || `Request failed with status ${response.status}`);
       }
 
       return data;
     } catch (error) {
       console.error('API Request Error:', error);
+
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your connection.');
+      }
+
       throw error;
     }
   }

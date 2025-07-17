@@ -9,8 +9,11 @@ const router = express.Router();
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth
-  message: 'Too many authentication attempts, please try again later.',
+  max: 10, // limit each IP to 10 requests per windowMs for auth
+  message: {
+    success: false,
+    message: 'Too many authentication attempts, please try again later.'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -40,16 +43,14 @@ const registerValidation = [
     .withMessage('Please provide a valid email'),
   body('password')
     .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    .withMessage('Password must be at least 6 characters long'),
   body('phone')
-    .isMobilePhone()
+    .isLength({ min: 10 })
     .withMessage('Please provide a valid phone number'),
   body('telegramUsername')
     .optional()
-    .matches(/^@?[a-zA-Z0-9_]{5,32}$/)
-    .withMessage('Please provide a valid Telegram username')
+    .isLength({ min: 3, max: 50 })
+    .withMessage('Telegram username must be between 3 and 50 characters')
 ];
 
 const loginValidation = [
