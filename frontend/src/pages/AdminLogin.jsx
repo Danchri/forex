@@ -18,27 +18,19 @@ const AdminLogin = () => {
     setError('')
 
     try {
-      // Simulate admin login
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Check if admin credentials
-      if (formData.email === 'admin@forexclass.com') {
-        const adminData = {
-          id: 1,
-          email: formData.email,
-          firstName: 'Admin',
-          lastName: 'User',
-          role: 'admin',
-          phone: '+254700000000',
-          telegramUsername: '@admin',
-          profilePhoto: null
+      const result = await login({
+        email: formData.email,
+        password: formData.password
+      })
+
+      if (result.success) {
+        if (result.user.role === 'admin') {
+          navigate('/admin/dashboard')
+        } else {
+          setError('Access denied. Admin privileges required.')
         }
-        const token = 'admin-jwt-token'
-        
-        login(adminData, token)
-        navigate('/admin/dashboard')
       } else {
-        setError('Invalid admin credentials. Use admin@forexclass.com')
+        setError(result.error || 'Invalid credentials. Please try again.')
       }
     } catch (error) {
       setError('Login failed. Please try again.')

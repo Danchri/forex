@@ -30,35 +30,17 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       if (isLogin) {
-        // Simulate login API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Mock successful login - check if admin email
-        const isAdminEmail = formData.email === 'admin@forexclass.com'
-        const userData = {
-          id: 1,
+        // Login logic
+        const result = await login({
           email: formData.email,
-          firstName: isAdminEmail ? 'Admin' : 'John',
-          lastName: isAdminEmail ? 'User' : 'Doe',
-          role: isAdminEmail ? 'admin' : 'user',
-          phone: '+254712345678',
-          telegramUsername: '@johndoe',
-          profilePhoto: null,
-          subscription: {
-            plan: 'Premium',
-            status: 'active',
-            startDate: '2024-01-15',
-            expiryDate: '2024-02-15',
-            nextBilling: '2024-02-15',
-            amount: '$99',
-            paymentMethod: 'M-Pesa',
-            telegramAccess: true
-          }
+          password: formData.password
+        })
+
+        if (result.success) {
+          onSuccess()
+        } else {
+          setError(result.error || 'Login failed. Please try again.')
         }
-        const token = 'mock-jwt-token'
-        
-        login(userData, token)
-        onSuccess()
       } else {
         // Validate registration
         if (formData.password !== formData.confirmPassword) {
@@ -67,33 +49,21 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
           return
         }
 
-        // Simulate registration API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Mock successful registration
-        const userData = {
-          id: 1,
-          email: formData.email,
+        // Registration logic
+        const result = await register({
           firstName: formData.firstName,
           lastName: formData.lastName,
-          phone: '',
-          telegramUsername: '',
-          profilePhoto: null,
-          subscription: {
-            plan: 'Basic',
-            status: 'inactive',
-            startDate: null,
-            expiryDate: null,
-            nextBilling: null,
-            amount: '$0',
-            paymentMethod: null,
-            telegramAccess: false
-          }
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          telegramUsername: formData.telegramUsername
+        })
+
+        if (result.success) {
+          onSuccess()
+        } else {
+          setError(result.error || 'Registration failed. Please try again.')
         }
-        const token = 'mock-jwt-token'
-        
-        register(userData, token)
-        onSuccess()
       }
     } catch (error) {
       setError('Authentication failed. Please try again.')

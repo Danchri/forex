@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import apiService from '../services/api'
 
 const AuthContext = createContext()
 
@@ -12,51 +13,104 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Check if user is logged in on app start
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin'
+
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('user')
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData))
-      } catch (error) {
-        console.error('Error parsing user data:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+    // Check for existing session and validate token
+    const checkAuthStatus = async () => {
+      const token = apiService.getAuthToken()
+
+      if (token) {
+        try {
+          const response = await apiService.getCurrentUser()
+          if (response.success) {
+            setUser(response.data.user)
+            setIsAuthenticated(true)
+          } else {
+            // Token is invalid
+            apiService.removeAuthToken()
+          }
+        } catch (error) {
+          console.error('Auth check error:', error)
+          apiService.removeAuthToken()
+        }
       }
+
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    checkAuthStatus()
   }, [])
 
-  const login = (userData, token) => {
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
+  const login = async (credentials) => {
+    try {
+      setIsLoading(true)
+      const response = await apiService.login(credentials)
+
+      if (response.success) {
+        setUser(response.data.user)
+        setIsAuthenticated(true)
+        return { success: true, user: response.data.user }
+      } else {
+        return { success: false, error: response.message }
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      return { success: false, error: error.message || 'Login failed' }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
+  const register = async (userData) => {
+    try {
+      setIsLoading(true)
+      const response = await apiService.register(userData)
+
+      if (response.success) {
+        setUser(response.data.user)
+        setIsAuthenticated(true)
+        return { success: true, user: response.data.user }
+      } else {
+        return { success: false, error: response.message }
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      return { success: false, error: error.message || 'Registration failed' }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const register = (userData, token) => {
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(userData))
+  const logout = async () => {
+    try {
+      await apiService.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setUser(null)
+      setIsAuthenticated(false)
+    }
+  }
+
+  // Helper function to update user data
+  const updateUser = (userData) => {
     setUser(userData)
   }
 
   const value = {
     user,
+    isAuthenticated,
+    isAdmin,
     isLoading,
     login,
-    logout,
     register,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin'
+    logout,
+    updateUser
   }
 
   return (
