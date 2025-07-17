@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCurrency } from '../hooks/useCurrency'
@@ -6,6 +6,7 @@ import AdminSettings from '../components/AdminSettings'
 import AddUserModal from '../components/AddUserModal'
 import AddPackageModal from '../components/AddPackageModal'
 import WebsiteManagement from '../components/WebsiteManagement'
+import apiService from '../services/api'
 
 const AdminPage = () => {
   const { user, logout } = useAuth()
@@ -15,6 +16,46 @@ const AdminPage = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showAddPackageModal, setShowAddPackageModal] = useState(false)
   const { formatUSDToKSH, exchangeRate } = useCurrency()
+
+  // Fetch users from API
+  const fetchUsers = async () => {
+    try {
+      setIsLoadingUsers(true)
+      setUserError('')
+      const response = await apiService.getUsers()
+
+      if (response.success) {
+        // Transform API data to match frontend format
+        const transformedUsers = response.data.users.map(user => ({
+          id: user._id,
+          name: user.fullName || `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          phone: user.phone,
+          telegram: user.telegramUsername || 'Not provided',
+          plan: user.subscription?.plan || 'Basic',
+          status: user.subscription?.status || 'pending',
+          joinDate: new Date(user.createdAt).toISOString().split('T')[0],
+          expiryDate: user.subscription?.expiryDate ? new Date(user.subscription.expiryDate).toISOString().split('T')[0] : 'N/A',
+          lastPayment: user.subscription?.amount || '$0',
+          telegramStatus: user.telegramStatus || 'pending'
+        }))
+
+        setUsers(transformedUsers)
+      } else {
+        setUserError('Failed to load users')
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      setUserError('Error loading users: ' + error.message)
+    } finally {
+      setIsLoadingUsers(false)
+    }
+  }
+
+  // Load users on component mount
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
   // Mock admin data - in real app, this would come from API
   const [stats] = useState({
@@ -26,47 +67,9 @@ const AdminPage = () => {
     monthlyGrowth: 12.5
   })
 
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+254712345678',
-      telegram: '@johndoe',
-      plan: 'Premium',
-      status: 'active',
-      joinDate: '2024-01-15',
-      expiryDate: '2024-02-15',
-      lastPayment: '$99',
-      telegramStatus: 'added'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+254723456789',
-      telegram: '@janesmith',
-      plan: 'Basic',
-      status: 'expired',
-      joinDate: '2024-01-10',
-      expiryDate: '2024-01-25',
-      lastPayment: '$29',
-      telegramStatus: 'removed'
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      phone: '+254734567890',
-      telegram: '@mikej',
-      plan: 'VIP',
-      status: 'active',
-      joinDate: '2024-01-20',
-      expiryDate: '2024-02-20',
-      lastPayment: '$199',
-      telegramStatus: 'added'
-    }
-  ])
+  const [users, setUsers] = useState([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [userError, setUserError] = useState('')
 
   const [packages, setPackages] = useState([
     {
@@ -189,7 +192,8 @@ const AdminPage = () => {
   }
 
   const handleUserAdded = (newUser) => {
-    setUsers([...users, newUser])
+    // Refresh the users list from the API
+    fetchUsers()
   }
 
   const handlePackageAdded = (newPackage) => {
@@ -578,7 +582,40 @@ const AdminPage = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {users.map((user) => (
+                        {isLoadingUsers ? (
+                          <tr>
+                            <td colSpan="8" className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                                <p className="text-gray-600">Loading users...</p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : userError ? (
+                          <tr>
+                            <td colSpan="8" className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center">
+                                <div className="text-red-500 mb-2">⚠️</div>
+                                <p className="text-red-600 mb-4">{userError}</p>
+                                <button
+                                  onClick={fetchUsers}
+                                  className="btn-primary px-4 py-2"
+                                >
+                                  Retry
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : users.length === 0 ? (
+                          <tr>
+                            <td colSpan="8" className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center">
+                                <div className="text-gray-400 mb-2">👥</div>
+                                <p className="text-gray-600">No users found</p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : users.map((user) => (
                           <tr key={user.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4">
                               <div>
